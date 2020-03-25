@@ -1,0 +1,28 @@
+/**flex布局*/
+.u-f, .u-f-ac, .u-f-jc, .u-f-ajc{
+	display: flex;
+}
+
+.u-f-ac,.u-f-ajc{
+	align-items: center;
+}
+
+.u-f-jc,.u-f-ajc{
+	justify-content: center;
+}
+
+.u-f-jb{
+	justify-content: space-between;
+}
+.u-fl{
+	flex: 1;
+}
+.u-f-column{
+	flex-direction: column;
+}
+
+.icon-xinlangweibo{background: #EE5E5E;}
+.icon-shezhi{background: #4A73BA;}
+.icon-weixin{background: #514D4C;}
+.icon-QQ{background: #2AD19B;}
+
