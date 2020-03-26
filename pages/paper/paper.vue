@@ -213,9 +213,7 @@
 		//监听原生标题栏按钮点击事件
 		onNavigationBarButtonTap(e){
 			if(e.index==0){
-				uni.navigateTo({
-					url: '../user-list/user-list'
-				});
+				uni.navigateTo({url: '../user-list/user-list'});
 			}
 			if(e.index==1){
 				this.showPopup();
@@ -230,50 +228,31 @@
 			},
 			showPopup(){this.popupShow=true;},		//显示菜单
 			hidePopup(){this.popupShow=false;},		//隐藏菜单
-			getData(){
-				setTimeout(()=> {
-					let arr = [
-						{
-							userpic:"../../static/demo/userpic/12.jpg",
-							username:"下拉刷新1",
-							time:"10:21",
-							data:"我是第一条信息",
-							noreadnum:0
-						},
-						{
-							userpic:"../../static/demo/userpic/12.jpg",
-							username:"下拉刷新2",
-							time:"10:21",
-							data:"我是第二条信息",
-							noreadnum:5
-						}
-					];
-					this.list = arr;
-					uni.stopPullDownRefresh();
-				}, 2000);
-			},
 			//上拉加载更多：如果不是"上拉加载"，证明已经在请求数据，所以直接return
 			loadmore(){
-				if(this.loadtext != "上拉加载更多..."){return;}
-				this.loadtext = "加载中...";
-				//模拟获取数据
-				setTimeout(()=>{
-					let obj={
-						userpic:"../../static/demo/userpic/12.jpg",
-						username:"上拉继续加载",
-						time:"10:21",
-						data:"我是第三条信息",
-						noreadnum:9
-					};
-					this.list.push(obj);				//将获取的数据添加到集合中
-					this.loadtext = "上拉加载更多..."	//获取数据完成
-				},1000);
 				//this.tablist[this.tabIndex].loadtext = "没有更多数据了...";
 			},
-			//点击切换子页面
-			tabChange(index){this.tabIndex = index;},
+			//点击切换子页面（0，1，2）
+			tabChange(index){
+				this.tabIndex = index;
+				this.getData();
+			},
 			//滑动切换子页面
-			slideChange(e){this.tabIndex = e.detail.current ;},
+			slideChange(e){
+				this.tabIndex = e.detail.current;
+				this.getData();
+			},
+			getData(){
+				if(this.tabIndex==0){
+					console.log("加载好友数据");
+				}
+				if(this.tabIndex==1){
+					console.log("加载群组数据");
+				}
+				if(this.tabIndex==2){
+					console.log("加载机构数据");
+				}
+			},
 			//树状态切换方法
 			showdepartment() {
 				this.isdepartment = !this.isdepartment
