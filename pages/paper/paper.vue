@@ -79,8 +79,6 @@
 						</view>
 					</template>
 					
-					
-					
 				</swiper-item>
 			</swiper>
 		</view>
@@ -96,6 +94,9 @@
 	import swiperTabHead from "../../components/index/swiper-tab-head.vue";
 	import noThing from "../../components/common/no-thing.vue";
 	export default {
+		
+		//system/dept/treeselect
+		
 		components: {
 			paperList,
 			loadMore,
@@ -187,19 +188,6 @@
 			        _this.swiperheight = height;
 			    }
 			});
-			//加载全部用户信息
-			this.iGlobal.request({
-			    url:'/chat/user/list', method:'GPOST'
-			}).then((res)=>{
-				console.log(JSON.stringify(res));
-			});
-			//加载我的好友信息
-			this.iGlobal.request({
-			    url:'/chat/friend/list', method:'GPOST'
-			}).then((res)=>{
-				console.log(JSON.stringify(res));
-			});
-			
 		},
 		//页面滚动到底部的事件(不是scroll-view滚到底)常用于下拉下一页数据
 		onReachBottom(){
@@ -245,12 +233,26 @@
 			getData(){
 				if(this.tabIndex==0){
 					console.log("加载好友数据");
+					//加载我的好友信息
+					this.iGlobal.request({
+					    url:'/chat/friend/list', method:'GET'
+					}).then((res)=>{
+						console.log(JSON.stringify(res));
+					});
 				}
 				if(this.tabIndex==1){
 					console.log("加载群组数据");
+					
 				}
 				if(this.tabIndex==2){
 					console.log("加载机构数据");
+					this.iGlobal.request({
+					    url:'/system/dept/treeselectAll', method:'GET',
+						data:{deptId:100}
+					}).then((res)=>{
+						console.log(JSON.stringify(res));
+					});
+					
 				}
 			},
 			//树状态切换方法
