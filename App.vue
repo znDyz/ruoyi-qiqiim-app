@@ -4,15 +4,17 @@
 			this.lib.NetWork.On();			//网路监听（用户目前断网，切换wifi）
 		},
 		onShow: function() {	
-			//app前台运行时调用，app打开验证token，如果验证通过直接跳转index页面，
-			//验证未通过，清除本地token，跳转登录页面
+			/*
+			app前台运行时调用，app打开验证token，
+				验证通过---存储用户信息
+				验证失败---清除本地token
+			*/
 			var token = uni.getStorageSync("token");
 			if(token!="" && token!=null && token!=undefined){
 				this.iGlobal.request({
 				    url:'/checkToken', method:'POST',
 				}).then((res)=>{
 					if(res.code==200){
-						//console.log("onshou方法返回值中包含的用户信息："+JSON.stringify(res.data));
 						uni.setStorageSync("user",res.data);
 					}else{
 						uni.setStorageSync("token","");
