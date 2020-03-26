@@ -148,17 +148,6 @@
 				if(_this.status==true){
 					var form = {}
 					if(_this.username && _this.password){
-						/* 
-						uni.request({
-						    url: 'http://192.168.1.2:8080/mobileLogin', //仅为示例，并非真实接口地址。
-							method:'POST',
-						    data: { username:this.username,password:this.password,code:this.code,uuid:this.uuid},
-						    header: {'content-type': 'application/x-www-form-urlencoded'},
-						    success: (res) => {
-						        console.log(res.data.msg+"--->返回的token："+res.data.token);
-						    }
-						}); 
-						*/
 						this.iGlobal.request({
 						    url:'/mobileLogin', method:'POST',
 							data:{
@@ -172,8 +161,7 @@
 							if(res.code=="200" && res.token){
 								uni.setStorageSync('token', res.token);
 								if(_this.rememberMe){
-									uni.setStorageSync('username', _this.username);
-									uni.setStorageSync('password', _this.password);
+									uni.setStorageSync('rememberMe', true);
 								}
 								_this.toIndex();
 							} 
@@ -194,14 +182,20 @@
 			},
 			toIndex(){
 				uni.switchTab({ url: "../index/index"});
-				//uni.navigateTo({ url: '../chat/chat'});
+				//获取存储用户信息
+				this.iGlobal.request({
+				    url:'/checkToken', method:'POST',
+				}).then((res)=>{
+					if(res.code==200){
+						uni.setStorageSync("user",res.data);
+					}
+				})
 			},
 			getCode(){
 				let _this = this;
 				this.iGlobal.request({
 				    url:'/captchaImage', method:'GET'
 				}).then((res)=>{
-					console.log(JSON.stringify(res));
 				    _this.codeUrl = "data:image/gif;base64," + res.img;
 					_this.uuid = res.uuid;
 				}).catch((err)=>{
