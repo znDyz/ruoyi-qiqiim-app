@@ -22,8 +22,8 @@
         data() {
             return {
                 windowHeight: '603px'  ,//定义手机屏幕高度值变量
-				timer: null, //首先我在data函数里面进行定义定时器名称：
-				timerNum:5 // 设置定时器时间
+				timer: null, 			//首先我在data函数里面进行定义定时器名称：
+				timerNum:5 				// 设置定时器时间
             }
         },
 		watch:{
@@ -39,19 +39,22 @@
 			_me.timer = setInterval(() => {
 					_me.timerNum --;
 					if(_me.timerNum==0){
-						_me.toLoginPage();
+						_me.closeInit();
 					}	
 			}, 1000);
         },
         methods: {
             animationfinish(e) {
                 //判断到最后一张后，自动转向进入首页--"当前播放图片为："+JSON.stringify(e.detail.current)
-                if (e.detail.current == 0) {
-                    console.log('dyz----第一遍动画已经播放结束');
-                }
+                if (e.detail.current == 0) { console.log('dyz----第一遍动画已经播放结束'); }
             },
 			closeInit(){
-				this.toLoginPage();
+				var token = uni.getStorageSync("token");
+				if(token){
+					this.toIndexPage();
+				}else{
+					this.toLoginPage();
+				}
 			},
 			toLoginPage(){
 				uni.redirectTo({
@@ -59,7 +62,14 @@
 					animationType: 'pop-in',
 					animationDuration: 200
 				});
-			}
+			},
+			toIndexPage(){
+				uni.switchTab({
+					url: "../index/index",
+					animationType: 'pop-in',
+					animationDuration: 200
+				});
+			},
         },
 		//onUnload方法中清除了定时器
 		onUnload(){
