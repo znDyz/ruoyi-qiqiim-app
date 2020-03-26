@@ -23,19 +23,64 @@
 			<swiper class="swiper-box" @change="slideChange"
 					:style="{height:swiperheight+'px'}" :current="tabIndex">
 				<swiper-item v-for="(items,index) in mylist" :key="index">
-					<scroll-view scroll-y @scrolltolower="loadmore(index)" style="height:100%;">
-						<template v-if="items.list.length>0">
-							<block v-for="(item, index1) in items.list" :key="index1">
-								<paper-list :item="item" :index="index"></paper-list>
-							</block> 
-							<!--上拉加载组件-->
-							<load-more :loadtext="items.loadtext"></load-more>
-						</template>
-						<template v-else>
-							<!--无内容默认组件-->
-							<noThing></noThing>
-						</template>
-					</scroll-view>
+					<template v-if="index==0">
+						<scroll-view scroll-y @scrolltolower="loadmore(index)" style="height:100%;">
+							<template v-if="items.list.length>0">
+								<block v-for="(item, index1) in items.list" :key="index1">
+									<paper-list :item="item" :index="index"></paper-list>
+								</block> 
+								<!--上拉加载组件-->
+								<load-more :loadtext="items.loadtext"></load-more>
+							</template>
+							<template v-else>
+								<!--无内容默认组件-->
+								<noThing></noThing>
+							</template>
+						</scroll-view>
+					</template>
+					
+					<!--我的群组-->
+					<template v-if="index==1">
+						hahahahah
+					</template>
+					
+					<!--公司用户-->
+					<template v-if="index==2">
+						<view class="structure">
+							<!-- 组织架构 -->
+							<view class="stre-bd">
+								<view class="structure">
+									<view class="companyName icon" @click="showdepartment" :class="isdepartment ? 'onicon' : ''">
+										<text>{{items.companyName}}</text>
+									</view>
+									<view class="department" v-show="isdepartment">
+										<view class="department-items icon" v-for="(item, i) in items.department" :key="i" :class="{onicon: index === a}">
+											<view class="sector" @click="showstaffs(i)">
+												<text>{{item.sector}}</text>
+											</view>
+											<view class="staffs" :class="{on: i === a}">
+												<view class="staff" v-for="(person, j) in item.staffs" :key="j">
+													<view class="staffsname" v-if="person.state">
+														<text class="iconfont" style="color: #68a6ff;">&#xe606;</text>
+														<text style="color: #000000;">{{person.name}}</text>
+														<text style="color: #68a6ff; font-size: 24upx;margin-left:10upx;">[在线]</text>
+													</view>
+													<view class="staffsname" v-else>
+														<text class="iconfont" style="color: #d2d2d2;">&#xe606;</text>
+														<text style="color: #b4b4b4;">{{person.name}}</text>
+														<text style="color: #d2d2d2; font-size: 24upx;margin-left:10upx;">[离线]</text>
+													</view>
+												</view>
+											</view>
+										</view>
+									</view>
+								</view>
+							</view>
+						</view>
+					</template>
+					
+					
+					
 				</swiper-item>
 			</swiper>
 		</view>
@@ -63,10 +108,13 @@
 				swiperheight:500,
 				tabIndex:0,
 				tabBars: [
-					{name: '我的好友',id: 'haoyou'}, 
-					{name: '我的群组',id: 'qunzu'},
-					{name: '所有用户',id: 'yonghu'}
+					{name: '好友',id: 'haoyou'}, 
+					{name: '群组',id: 'qunzu'},
+					{name: '机构',id: 'gongsi'}
 				],
+				isdepartment: true,
+				isstaffs: true,
+				a: -1,
 				popupShow:false,
 				loadtext: "上拉加载更多...",
 				mylist:[
@@ -85,24 +133,46 @@
 					{
 						loadtext:"上拉加载更多...",
 						list:[
-							{
-								userpic:"../../static/demo/userpic/12.jpg",
-								username:"群组一号",
-								time:"10:21",
-								data:"我是第一条信息",
-								noreadnum:8
-							}
+							
 						]
 					},
 					{
-						loadtext:"上拉加载更多...",
-						list:[
+						companyName: "西安时代飞翎信息技术有限公司",
+						department: [{
+								sector: "产品研发部",
+								staffs: [
+									{name: "张丽颖",state: true},
+									{name: "刘建轻",state: true},
+									{name: "王盈利",state: false},
+									{name: "马健五",state: false}
+								]
+							},
 							{
-								userpic:"../../static/demo/userpic/12.jpg",
-								username:"群组一号",
-								time:"10:21",
-								data:"我是第一条信息",
-								noreadnum:8
+								sector: "市场销售部",
+								staffs: [
+									{name: "张丽颖",state: true},
+									{name: "刘建轻",state: false},
+									{name: "王盈利",state: false},
+									{name: "马健五",state: false}
+								]
+							},
+							{
+								sector: "产品策划部",
+								staffs: [
+									{name: "张丽颖",state: true},
+									{name: "刘建轻",state: false},
+									{name: "王盈利",state: false},
+									{name: "马健五",state: false}
+								]
+							},
+							{
+								sector: "市场运营部",
+								staffs: [
+									{name: "张丽颖",state: true},
+									{name: "刘建轻",state: false},
+									{name: "王盈利",state: false},
+									{name: "马健五",state: false}
+								]
 							}
 						]
 					}
@@ -203,13 +273,94 @@
 			//点击切换子页面
 			tabChange(index){this.tabIndex = index;},
 			//滑动切换子页面
-			slideChange(e){this.tabIndex = e.detail.current ;}
+			slideChange(e){this.tabIndex = e.detail.current ;},
+			//树状态切换方法
+			showdepartment() {
+				this.isdepartment = !this.isdepartment
+				//this.isdepartment = !this.isdepartment;
+			},
+			showstaffs(index) {
+				if(index != this.a){
+					this.a = index;
+					//this.a = index;
+				}else{
+					//this.a = -1;
+					this.a = -1;
+				}
+				console.log("执行结束----->a"+this.a+"   index--->"+index);
+			}
 		}
 	}
 </script>
 
-<style>
-	.body{
-		padding: 0 20upx;
+<style lang="scss" scoped="true">
+	.body{padding: 0 20upx;}
+	.stre-bd {
+		padding: 30upx;
+		.structure {
+			.icon::before {
+				content: "";
+				display: inline-block;
+				width: 0upx;
+				height: 0upx;
+				border: 12upx solid #7cbaff;
+				border-left: 12upx solid transparent;
+				border-top: 12upx solid transparent;
+				float: left;
+				margin-top: 17upx;
+				margin-right: 20upx;
+				transition: all 0.3s;
+			}
+			.onicon::before{transform: rotate(-45deg)}
+			.companyName {font-size: 32upx;line-height: 60upx;font-weight: 500;color: #4191ea;
+				&::before {
+					margin-top: 18upx;
+				}
+			}
+
+			.department {
+				margin-left: 10upx;
+				// transition: all 1s;
+				.department-items {
+					font-size: 32upx;
+					line-height: 60upx;
+					color: #000;
+
+					.sector {line-height: 60upx;}
+					.staffs {
+						display: none;
+						margin-left: 44upx;
+						.staff {
+							line-height: 60upx;
+
+							.iconfont {
+								font-size: 38upx;
+								margin-right: 26upx;
+							}
+						}
+					}
+					.on {display: block;}
+				}
+
+			}
+
+		}
 	}
 </style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
