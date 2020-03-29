@@ -56,12 +56,11 @@
 				query.select("#scrollview").boundingClientRect();
 				query.select(".user-chat-item").boundingClientRect();
 				query.exec((resArr)=>{
-					resArr[1].forEach((ret)=> {
-						this.style.itemHight+=ret.height;
-					});
+					console.log(JSON.stringify(resArr));
+					this.style.itemHight+=resArr[0].height;
 					if(this.style.itemHight>this.style.contentHight){
 						this.scrollTop = this.style.itemHight;
-					}
+					} 
 				})
 			},
 			//获取聊天数据
@@ -72,7 +71,7 @@
 						userpic:"../../static/demo/userpic/6.jpg",
 						type:"text",
 						data:"哈哈哈哈",
-						time:"1554970014",//php的时间戳,
+						time:"1554970014",
 						formattime:""
 					},
 					{
@@ -80,7 +79,7 @@
 						userpic:"../../static/demo/userpic/10.jpg",
 						type:"img",
 						data:"../../static/demo/2.jpg",
-						time:"1554970814",	//php的时间戳
+						time:"1554970814",
 						formattime:""
 					}
 				];

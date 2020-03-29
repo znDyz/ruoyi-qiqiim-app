@@ -22,15 +22,16 @@
 		<view class="uni-tab-bar">
 			<swiper class="swiper-box" @change="slideChange"
 					:style="{height:swiperheight+'px'}" :current="tabIndex">
-				<swiper-item v-for="(items,index) in mylist" :key="index">
+				<swiper-item v-for="(items,index) in tabBars" :key="index">
+					
 					<template v-if="index==0">
 						<scroll-view scroll-y @scrolltolower="loadmore(index)" style="height:100%;">
-							<template v-if="items.list.length>0">
-								<block v-for="(item, index1) in items.list" :key="index1">
-									<paper-list :item="item" :index="index"></paper-list>
+							<template v-if="myfriend.list.length>0">
+								<block v-for="(item, i) in myfriend.list" :key="i">
+									<paper-list :item="item" :index="i"></paper-list>
 								</block> 
 								<!--上拉加载组件-->
-								<load-more :loadtext="items.loadtext"></load-more>
+								<load-more :loadtext="myfriend.loadtext"></load-more>
 							</template>
 							<template v-else>
 								<!--无内容默认组件-->
@@ -41,13 +42,17 @@
 					
 					<!--我的群组-->
 					<template v-if="index==1">
-						hahahahah
+						<view>
+							1111111111111111111111111111111111111111111111
+						</view>
 					</template>
 					
-					<!--公司用户-->
+					<!--公司用户组织架构-->
 					<template v-if="index==2">
-						<view class="structure">
-							<!-- 组织架构 -->
+						<view>
+							22222222222222222222222222222222222222222222222
+						</view>
+						<!-- <view class="structure">
 							<view class="stre-bd">
 								<view class="structure">
 									<view class="companyName icon" @click="showdepartment" :class="isdepartment ? 'onicon' : ''">
@@ -76,7 +81,7 @@
 									</view>
 								</view>
 							</view>
-						</view>
+						</view> -->
 					</template>
 					
 				</swiper-item>
@@ -117,67 +122,36 @@
 				isstaffs: true,
 				a: -1,
 				popupShow:false,
-				loadtext: "上拉加载更多...",
-				mylist:[
-					{
-						loadtext:"上拉加载更多...",
-						list:[
-							{
-								userpic:"../../static/demo/userpic/12.jpg",
-								username:"昵称一号",
-								time:"10:21",
-								data:"我是第一条信息",
-								noreadnum:"10"
-							}
-						]
-					},
-					{
-						loadtext:"上拉加载更多...",
-						list:[
-							
-						]
-					},
-					{
-						companyName: "西安时代飞翎信息技术有限公司",
-						department: [{
-								sector: "产品研发部",
-								staffs: [
-									{name: "张丽颖",state: true},
-									{name: "刘建轻",state: true},
-									{name: "王盈利",state: false},
-									{name: "马健五",state: false}
-								]
-							},
-							{
-								sector: "市场销售部",
-								staffs: [
-									{name: "张丽颖",state: true},
-									{name: "刘建轻",state: false},
-									{name: "王盈利",state: false},
-									{name: "马健五",state: false}
-								]
-							},
-							{
-								sector: "产品策划部",
-								staffs: [
-									{name: "张丽颖",state: true},
-									{name: "刘建轻",state: false},
-									{name: "王盈利",state: false},
-									{name: "马健五",state: false}
-								]
-							},
-							{
-								sector: "市场运营部",
-								staffs: [
-									{name: "张丽颖",state: true},
-									{name: "刘建轻",state: false},
-									{name: "王盈利",state: false},
-									{name: "马健五",state: false}
-								]
-							}
-						]
-					}
-				]
+				myfriend:{
+					loadtext:"上拉加载更多...",
+					list:[
+						{
+							userpic:"../../static/demo/userpic/1.jpg",
+							username:"钊钊娜娜",
+							time:"10:10",
+							data:"收到消息请回复，哈哈",
+							noreadnum:8,
+							uuid:"e05d2e58-e0d5-470d-8fb6-11d3b0852eff"
+						}
+					]
+				},
+				mygroup:{
+					loadtext:"上拉加载更多...",
+					list:[]
+				},
+				company:{
+					companyName: "西安时代飞翎信息技术有限公司",
+					department: [{
+							sector: "产品研发部",
+							staffs: [
+								{name: "张丽颖",state: true},
+								{name: "刘建轻",state: true},
+								{name: "王盈利",state: false},
+								{name: "马健五",state: false}
+							]
+						}
+					]
+				}
 			}
 		},
 		onLoad(){
@@ -188,6 +162,7 @@
 			        _this.swiperheight = height;
 			    }
 			});
+			_this.initloadData();
 		},
 		//页面滚动到底部的事件(不是scroll-view滚到底)常用于下拉下一页数据
 		onReachBottom(){
@@ -208,24 +183,20 @@
 			}
 		},
 		methods: {
+			showPopup(){this.popupShow=true;},		//显示菜单
+			hidePopup(){this.popupShow=false;},		//隐藏菜单
 			addFriends(){
 				console.log("添加好友");this.hidePopup();
 			},
 			clearCache(){
 				console.log("清除缓存");this.hidePopup();
 			},
-			showPopup(){this.popupShow=true;},		//显示菜单
-			hidePopup(){this.popupShow=false;},		//隐藏菜单
 			//上拉加载更多：如果不是"上拉加载"，证明已经在请求数据，所以直接return
 			loadmore(){
 				//this.tablist[this.tabIndex].loadtext = "没有更多数据了...";
 			},
-			//点击切换子页面（0，1，2）
-			tabChange(index){
-				this.tabIndex = index;
-				this.getData();
-			},
-			//滑动切换子页面
+			//点击切换子页面（0，1，2）触发slideChange(e)方法---滑动切换子页面
+			tabChange(index){this.tabIndex = index;},
 			slideChange(e){
 				this.tabIndex = e.detail.current;
 				this.getData();
@@ -233,26 +204,12 @@
 			getData(){
 				if(this.tabIndex==0){
 					console.log("加载好友数据");
-					//加载我的好友信息
-					this.iGlobal.request({
-					    url:'/chat/friend/list', method:'GET'
-					}).then((res)=>{
-						console.log(JSON.stringify(res));
-					});
 				}
 				if(this.tabIndex==1){
 					console.log("加载群组数据");
-					
 				}
 				if(this.tabIndex==2){
 					console.log("加载机构数据");
-					this.iGlobal.request({
-					    url:'/system/dept/treeselectAll', method:'GET',
-						data:{deptId:100}
-					}).then((res)=>{
-						console.log(JSON.stringify(res));
-					});
-					
 				}
 			},
 			//树状态切换方法
@@ -263,12 +220,44 @@
 			showstaffs(index) {
 				if(index != this.a){
 					this.a = index;
-					//this.a = index;
 				}else{
-					//this.a = -1;
 					this.a = -1;
 				}
 				console.log("执行结束----->a"+this.a+"   index--->"+index);
+			},
+			initloadData(){
+				//加载我的好友信息
+				this.iGlobal.request({
+				    url:'/chat/friend/getFriends', method:'GET',
+					data:{
+						userid:uni.getStorageSync("user").uuid,
+						pageNum:1,
+						pageSixe:5
+					}
+				}).then((res)=>{
+					if(res.code==200 && res.data.length>0){
+						 var dataList = res.data;
+						 
+						for (let i = 0; i < dataList.length; i++) {
+							var obj = {
+								userpic:dataList[i].avatar,
+								username:dataList[i].nickName,
+								time:"10:10",
+								data:dataList[i].remark,
+								noreadnum:8,
+								uuid:dataList[i].uuid
+							}
+							this.myfriend.list.push(obj);
+						}
+					}
+				});
+				//加载机构数据
+				this.iGlobal.request({
+				    url:'/system/dept/treeselectAll', method:'GET',
+					data:{deptId:100}
+				}).then((res)=>{
+					console.log(JSON.stringify(res));
+				});
 			}
 		}
 	}

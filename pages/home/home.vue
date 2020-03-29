@@ -88,16 +88,17 @@
 				});
 			},
 			logout(){
-				const token = uni.getStorageSync('token');
+				const token = 
 				/* 异步请求 */
 				this.iGlobal.request({
 				    url:'/logout',
 				    method:'POST'
 				}).then((res)=>{
-				    console.log("请求成功"+JSON.stringify(res));
-					uni.navigateTo({
-						url: '../login/login'
-					})
+					console.log("请求成功"+JSON.stringify(res));
+					if(res.code==200){
+						uni.setStorageSync("token","");
+						uni.navigateTo({url: '../login/login'});
+					}
 				}).catch((err)=>{
 				    console.log("请求失败");
 				});
