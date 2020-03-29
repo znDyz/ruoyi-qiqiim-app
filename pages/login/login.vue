@@ -187,7 +187,18 @@
 				    url:'/checkToken', method:'POST',
 				}).then((res)=>{
 					if(res.code==200){
-						uni.setStorageSync("user",res.data);
+						var userinfo = {
+								"uuid":res.data.uuid,
+								"userId":res.data.userId,
+								"deptId":res.data.deptId,
+								"userName":res.data.userName,
+								"nickName":res.data.nickName,
+								"email":res.data.email,
+								"phone":res.data.phonenumber,
+								"avatar":res.data.avatar,
+								"sex":res.data.sex,
+							}
+						uni.setStorageSync("user",userinfo);//res.data
 					}
 				})
 			},
