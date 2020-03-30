@@ -142,7 +142,7 @@
 				<view class="icon add"></view>
 			</view>
 			<!-- #endif -->
-			<view class="send" :class="isVoice?'hidden':''" @tap="sendText">
+			<view class="send" :class="isVoice?'hidden':''" @tap="sendMsgEvent">
 				<view class="btn">发送</view>
 			</view>
 		</view>
@@ -186,6 +186,22 @@
 		},
 		data() {
 			return {
+				friendObj:{},
+				userObj:{},
+				sendMsg:"",
+				receiveMsg:"",
+				socketTask: null,			// websocket对象
+				isOpen: false,				// socket打开状态
+				netWork : true,				// 当前网络状态
+				isClosed : false,			// 是否人为退出
+				timeout : 4000,				// 心跳检测频率	
+				timeoutObj: null,			// 心跳定时器
+				connectNum : 0,		 		// 当前重连次数
+				heartCheck : true,			// 心跳检测重连开关，true为启用，false为关闭
+				isReconnection : true,		// 断线重连开关，true为启用，false为关闭
+				loginMsg : "",				// 用户登录连接信息
+				heartMsg : "",				// 心跳信息
+				
 				//文字消息
 				textMsg:'',
 				//消息列表
@@ -234,23 +250,25 @@
 			};
 		},
 		onLoad(option) {
-			this.getMsgList();
+			var _this = this;
+			
+			console.log("获取上个页面传递过来的参数："+_this.friendObj.uuid);
+			_this.getMsgList();
 			//语音自然播放结束
-			this.AUDIO.onEnded((res)=>{this.playMsgid=null;});
+			_this.AUDIO.onEnded((res)=>{_this.playMsgid=null;});
 			// #ifndef H5
 			//录音开始事件//录音结束事件
-			this.RECORDER.onStart((e)=>{this.recordBegin(e);})
-			this.RECORDER.onStop((e)=>{this.recordEnd(e);})
+			_this.RECORDER.onStart((e)=>{_this.recordBegin(e);})
+			_this.RECORDER.onStop((e)=>{_this.recordEnd(e);})
 			// #endif
 			
-			// this.emojiList=[
-			// 	[{"url":"100.gif",alt:"[微笑]"},{"url":"101.gif",alt:"[伤心]"},{"url":"102.gif",alt:"[美女]"},{"url":"103.gif",alt:"[发呆]"},{"url":"104.gif",alt:"[墨镜]"},{"url":"105.gif",alt:"[哭]"},{"url":"106.gif",alt:"[羞]"},{"url":"107.gif",alt:"[哑]"},{"url":"108.gif",alt:"[睡]"},{"url":"109.gif",alt:"[哭]"},{"url":"110.gif",alt:"[囧]"},{"url":"111.gif",alt:"[怒]"},{"url":"112.gif",alt:"[调皮]"},{"url":"113.gif",alt:"[笑]"},{"url":"114.gif",alt:"[惊讶]"},{"url":"115.gif",alt:"[难过]"},{"url":"116.gif",alt:"[酷]"},{"url":"117.gif",alt:"[汗]"},{"url":"118.gif",alt:"[抓狂]"},{"url":"119.gif",alt:"[吐]"},{"url":"120.gif",alt:"[笑]"},{"url":"121.gif",alt:"[快乐]"},{"url":"122.gif",alt:"[奇]"},{"url":"123.gif",alt:"[傲]"}],
-			// 	[{"url":"124.gif",alt:"[饿]"},{"url":"125.gif",alt:"[累]"},{"url":"126.gif",alt:"[吓]"},{"url":"127.gif",alt:"[汗]"},{"url":"128.gif",alt:"[高兴]"},{"url":"129.gif",alt:"[闲]"},{"url":"130.gif",alt:"[努力]"},{"url":"131.gif",alt:"[骂]"},{"url":"132.gif",alt:"[疑问]"},{"url":"133.gif",alt:"[秘密]"},{"url":"134.gif",alt:"[乱]"},{"url":"135.gif",alt:"[疯]"},{"url":"136.gif",alt:"[哀]"},{"url":"137.gif",alt:"[鬼]"},{"url":"138.gif",alt:"[打击]"},{"url":"139.gif",alt:"[bye]"},{"url":"140.gif",alt:"[汗]"},{"url":"141.gif",alt:"[抠]"},{"url":"142.gif",alt:"[鼓掌]"},{"url":"143.gif",alt:"[糟糕]"},{"url":"144.gif",alt:"[恶搞]"},{"url":"145.gif",alt:"[什么]"},{"url":"146.gif",alt:"[什么]"},{"url":"147.gif",alt:"[累]"}],
-			// 	[{"url":"148.gif",alt:"[看]"},{"url":"149.gif",alt:"[难过]"},{"url":"150.gif",alt:"[难过]"},{"url":"151.gif",alt:"[坏]"},{"url":"152.gif",alt:"[亲]"},{"url":"153.gif",alt:"[吓]"},{"url":"154.gif",alt:"[可怜]"},{"url":"155.gif",alt:"[刀]"},{"url":"156.gif",alt:"[水果]"},{"url":"157.gif",alt:"[酒]"},{"url":"158.gif",alt:"[篮球]"},{"url":"159.gif",alt:"[乒乓]"},{"url":"160.gif",alt:"[咖啡]"},{"url":"161.gif",alt:"[美食]"},{"url":"162.gif",alt:"[动物]"},{"url":"163.gif",alt:"[鲜花]"},{"url":"164.gif",alt:"[枯]"},{"url":"165.gif",alt:"[唇]"},{"url":"166.gif",alt:"[爱]"},{"url":"167.gif",alt:"[分手]"},{"url":"168.gif",alt:"[生日]"},{"url":"169.gif",alt:"[电]"},{"url":"170.gif",alt:"[炸弹]"},{"url":"171.gif",alt:"[刀子]"}],
-			// 	[{"url":"172.gif",alt:"[足球]"},{"url":"173.gif",alt:"[瓢虫]"},{"url":"174.gif",alt:"[翔]"},{"url":"175.gif",alt:"[月亮]"},{"url":"176.gif",alt:"[太阳]"},{"url":"177.gif",alt:"[礼物]"},{"url":"178.gif",alt:"[抱抱]"},{"url":"179.gif",alt:"[拇指]"},{"url":"180.gif",alt:"[贬低]"},{"url":"181.gif",alt:"[握手]"},{"url":"182.gif",alt:"[剪刀手]"},{"url":"183.gif",alt:"[抱拳]"},{"url":"184.gif",alt:"[勾引]"},{"url":"185.gif",alt:"[拳头]"},{"url":"186.gif",alt:"[小拇指]"},{"url":"187.gif",alt:"[拇指八]"},{"url":"188.gif",alt:"[食指]"},{"url":"189.gif",alt:"[ok]"},{"url":"190.gif",alt:"[情侣]"},{"url":"191.gif",alt:"[爱心]"},{"url":"192.gif",alt:"[蹦哒]"},{"url":"193.gif",alt:"[颤抖]"},{"url":"194.gif",alt:"[怄气]"},{"url":"195.gif",alt:"[跳舞]"}],
-			// 	[{"url":"196.gif",alt:"[发呆]"},{"url":"197.gif",alt:"[背着]"},{"url":"198.gif",alt:"[伸手]"},{"url":"199.gif",alt:"[耍帅]"},{"url":"200.png",alt:"[微笑]"},{"url":"201.png",alt:"[生病]"},{"url":"202.png",alt:"[哭泣]"},{"url":"203.png",alt:"[吐舌]"},{"url":"204.png",alt:"[迷糊]"},{"url":"205.png",alt:"[瞪眼]"},{"url":"206.png",alt:"[恐怖]"},{"url":"207.png",alt:"[忧愁]"},{"url":"208.png",alt:"[眨眉]"},{"url":"209.png",alt:"[闭眼]"},{"url":"210.png",alt:"[鄙视]"},{"url":"211.png",alt:"[阴暗]"},{"url":"212.png",alt:"[小鬼]"},{"url":"213.png",alt:"[礼物]"},{"url":"214.png",alt:"[拜佛]"},{"url":"215.png",alt:"[力量]"},{"url":"216.png",alt:"[金钱]"},{"url":"217.png",alt:"[蛋糕]"},{"url":"218.png",alt:"[彩带]"},{"url":"219.png",alt:"[礼物]"},]				
-			// ]
-			this.emojiList =emojiData.imgArr[1].emojiList
+			_this.emojiList =emojiData.imgArr[1].emojiList
+			
+			_this.friendObj = JSON.parse(decodeURIComponent(option.friendObj));		//聊天对象	
+			_this.userObj = uni.getStorageSync("user");								//当前用户					
+			_this.loginMsg = _this.getLoginMsg();
+			_this.heartMsg = _this.getHeartMsg();
+			_this.initWebSocket();	// 进入页面创建websocket连接
 		},
 		
 		onShow(){
@@ -259,18 +277,157 @@
 			uni.getStorage({
 				key: 'redEnvelopeData',
 				success:  (res)=>{
-					// console.log(res.data);
 					let nowDate = new Date();
 					let lastid = this.msgList[this.msgList.length-1].msg.id;
 					lastid++;
 					let row = {type:"user",msg:{id:lastid,type:"redEnvelope",time:nowDate.getHours()+":"+nowDate.getMinutes(),userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{blessing:res.data.blessing,rid:Math.floor(Math.random()*1000+1),isReceived:false}}};
-					this.screenMsg(row);
+					//this.screenMsg(row);
 					uni.removeStorage({key: 'redEnvelopeData'});
 				}
 			});
 		},
 		methods:{
-			// 接受消息(筛选处理)
+			initWebSocket() {
+				let _this = this;
+				_this.socketTask = uni.connectSocket({
+					url: this.config.socketUrl,
+					success(data) {console.log("------socket------->websocket连接成功");}
+				});
+			 
+				//只有连接正常打开中 ，才能发送接收消息
+				_this.socketTask.onOpen((res) => {
+					console.log("------socket------->WebSocket连接正常打开中");
+					_this.isOpen = true;
+					_this.connectNum = 0;
+					// 1.发送登录信息 2.发送心跳信息 3.打开网络开关
+					_this.socketTask.send({
+						data: _this.loginMsg, async success() {
+							console.log("------socket------->发送登录信息成功");
+						}
+					});
+					if (_this.heartCheck) { _this._reset()._start();}
+					_this.netWork = true;
+					
+					_this.socketTask.onMessage((res) => {
+						var msg =  proto.Model.deserializeBinary(new Uint8Array(res.data));      //如果后端发送的是二进制帧（protobuf）会收到前面定义的类型
+						var msgCon =  proto.MessageBody.deserializeBinary(msg.getContent());  
+						var cmd = msg.getCmd();
+						var sender = msg.getSender();
+						var time = msg.getTimestamp();
+						console.log("------socket------->>收到服务器内容：cmd："+cmd+"time："+time+"sender："+sender);
+					});
+				});
+				//socket关闭事件监听
+				_this.socketTask.onClose((res) => {
+					console.log('------socket------->当前websocket连接已关闭');
+					if (_this.heartCheck) {_this._reset();}		// 停止心跳连接
+					_this.isOpen = true;						// 关闭已登录开关
+					// 检测是否是用户自己退出socket，如果不是进行重连
+					if (!_this.isClosed) {
+					    if (_this.isReconnection) {_this._reConnect()}
+					}
+				});
+				//socket异常事件监听
+				_this.socketTask.onError((err) => {
+					console.log('------socket------->当前websocket连接出现异常,错误信息为:' + JSON.stringify(err));
+					if (_this.heartCheck) {_this._reset();}	// 停止心跳连接
+					_this.isOpen = true;				// 关闭已登录开关
+					// 检测是否是用户自己退出socket，如果不是进行重连
+					if (!_this.isClosed) {
+					    if (_this.isReconnection) {_this._reConnect()}
+					}
+				});
+				// 检测网络变化
+				uni.onNetworkStatusChange(res => {
+				    console.log('------socket------->当前网络状态:' + res.isConnected);
+				    if (!_this.netWork) {
+				        _this.isOpen = false;
+				        if (this.isReconnection) {this._reConnect()}	 // 进行重连
+				    }
+				});
+			},
+			// 心跳重置
+			_reset() { clearTimeout(this.timeoutObj);},
+			// 心跳开始(定时发送心跳消息)
+			_start() { this.timeoutObj = setInterval(() => { this.sendBinary(1,this.heartMsg); }, this.timeout);},
+			
+			//发送二进制消息
+			sendBinary(msgType, byteMsg) {
+				let _this = this;	
+				var consoleInfo = "";
+				if (_this.isOpen) {
+					if(msgType==1){consoleInfo="心跳消息";}
+					if(msgType==2){consoleInfo="登录消息";}
+					if(msgType==3){consoleInfo="普通消息";}
+					// websocket的服务器的原理是:发送一次消息,同时返回一组数据【否则服务器会进去死循环崩溃】
+					_this.socketTask.send({
+						data: byteMsg, async success() {
+							console.log(consoleInfo+"发送成功");
+						},
+					});
+				}
+			},
+			// 重连方法，会根据时间频率越来越慢
+			_reConnect() {
+			    let timer, _this = this;
+			    if (_this.connectNum < 20) {
+			        timer = setTimeout(() => { _this.initWebSocket();}, 3000)
+			        _this.connectNum += 1;
+			    } 
+			},
+			// 关闭websocket连接
+			closeWebSocket() {
+				let _this = this;
+				_this.socketTask.close({
+					success(res) {
+						console.log("关闭成功", res)
+						_this.isClosed = true;
+						_this.isOpen = false;
+					}
+				});
+			},
+			getLoginMsg(){
+				var message = new proto.Model();
+				message.setCmd(1);								//1绑定，2心跳，3上线，4下线，5消息，6重连
+				message.setFlag(1);								//1 rsa加密 2aes加密
+				message.setSender(this.userObj.uuid);			//发送人
+				var bytes = message.serializeBinary();  
+				return bytes;
+			},
+			getHeartMsg(){
+				var message = new proto.Model();
+				message.setCmd(2);
+				var bytes = message.serializeBinary();
+				return bytes;
+			},
+			sendMsgEvent() {
+				/* 
+				this.hideDrawer();//隐藏抽屉
+				if(!this.textMsg){return;}
+				let content = this.replaceEmoji(this.textMsg);
+				let msg = {text:content}
+				this.sendMsg(msg,'text');
+				this.textMsg = '';//清空输入框 
+				*/
+				let _this = this;
+				if (_this.isOpen) {
+					var message = new proto.Model();
+					var content = new proto.MessageBody();
+					message.setCmd(5);								//1绑定，2心跳，3上线，4下线，5消息
+					message.setFlag(1);								//1 rsa加密 2aes加密
+					message.setSender(this.userObj.uuid);			//发送人
+					message.setReceiver(this.friendObj.uuid);		//接收人
+					content.setTitle("发送消息测试：这是发送的标题";	//标题
+					content.setTime(this.utils.now());				//时间戳
+					content.setType(0);								//消息类型：0文字   1文件
+					content.setContent(this.sendMsg);
+					message.setContent(content.serializeBinary());
+					var messagebytes = message.serializeBinary();  
+					_this.sendBinary(3, _this.getSeandMsg())
+				}
+			}
+			/*
+			// 接收消息(筛选处理)
 			screenMsg(msg){
 				//从长连接处转发给这个方法，进行筛选处理
 				if(msg.type=='system'){
@@ -308,6 +465,7 @@
 					this.scrollToView = 'msg'+msg.msg.id	// 滚动到底
 				});
 			},
+			*/
 			
 			//触发滑动到顶部(加载历史信息记录)
 			loadHistory(e){
@@ -349,54 +507,38 @@
 			},
 			// 加载初始页面消息
 			getMsgList(){
+				
 				// 消息列表
 				let list = [
-					//{type:"system",msg:{id:0,type:"text",content:{text:"欢迎进入聊天室"}}},
-					//{type:"user",msg:{id:1,type:"text",time:"12:56",userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{text:"为什么温度会相差那么大？"}}},
-					//{type:"user",msg:{id:2,type:"text",time:"12:57",userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:{text:"这个是有偏差的，两个温度相差十几二十度是很正常的，如果相差五十度，那即是质量问题了。"}}},
-					//{type:"user",msg:{id:3,type:"voice",time:"12:59",userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:{url:"/static/voice/1.mp3",length:"00:06"}}},
-					//{type:"user",msg:{id:4,type:"voice",time:"13:05",userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{url:"/static/voice/2.mp3",length:"00:06"}}},
-					//{type:"user",msg:{id:5,type:"img",time:"13:05",userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{url:"/static/img/p10.jpg",w:200,h:200}}},
-					//{type:"user",msg:{id:6,type:"img",time:"12:59",userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:{url:"/static/img/q.jpg",w:1920,h:1080}}},
-					
-					//{type:"system",msg:{id:7,type:"text",content:{text:"欢迎进入聊天室"}}},
-					//{type:"system",msg:{id:9,type:"redEnvelope",content:{text:"售后客服008领取了你的红包"}}},
-					//{type:"user",msg:{id:10,type:"redEnvelope",time:"12:56",userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{blessing:"恭喜发财，大吉大利，万事如意",rid:0,isReceived:false}}},
-					//{type:"user",msg:{id:11,type:"redEnvelope",time:"12:56",userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:{blessing:"恭喜发财",rid:1,isReceived:false}}},
-					
 					/*
 					string title = 1; 	//标题
 					string content = 2;	//内容
 					string time = 3;	//发送时间
 					uint32 type = 4;	//0 文字   1 文件
 					string extend = 5;	//扩展字段
-					
-					{
-						type:"user",
-						msg:{
-							id:1,
-							type:"text",
-							time:"12:56",
-							userinfo:{
-								uid:0,
-								username:"大黑哥",
-								face:"/static/img/face.jpg"
-							},
-							content:{
-								text:"为什么温度会相差那么大？"
-							}
-						}
-					},
 					*/
 					
-					
+					{type:"user",msg:{id:5,type:"img",time:"13:05",userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{url:"/static/img/p10.jpg",w:200,h:200}}},
+					{type:"user",msg:{id:6,type:"img",time:"12:59",userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:{url:"/static/img/q.jpg",w:1920,h:1080}}},
 					{type:"user",msg:{id:1,type:"text",time:"12:56",userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{text:"为什么温度会相差那么大？"}}},
 					{type:"user",msg:{id:2,type:"text",time:"12:57",userinfo:{uid:1,username:"售后",face:"/static/img/im/face/face_2.jpg"},content:{text:"两个温度相差十几二十度是很正常的。"}}},
 					{type:"user",msg:{id:3,type:"voice",time:"12:59",userinfo:{uid:1,username:"售后",face:"/static/img/im/face/face_2.jpg"},content:{url:"/static/voice/1.mp3",length:"00:06"}}},
 					{type:"user",msg:{id:4,type:"voice",time:"13:05",userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:{url:"/static/voice/2.mp3",length:"00:06"}}},
-					
 					{type:"system",msg:{id:7,type:"text",content:{text:"欢迎进入聊天室"}}},
+					
 				]
+				//加载历史消息数据
+				this.iGlobal.request({
+				    url:'/chat/message/list', method:'GET',
+					data:{
+						pageNum:1,
+						pageSize:5,
+						senduser:uni.getStorageSync("user").uuid,
+						receiveuser:this.friendObj.uuid
+					}
+				}).then((res)=>{
+					console.log(JSON.stringify(res));
+				});
 				// 获取消息中的图片,并处理显示尺寸
 				for(let i=0;i<list.length;i++){
 					if(list[i].type=='user'&&list[i].msg.type=="img"){
@@ -534,17 +676,15 @@
 					this.hideDrawer();
 				}
 			},
-			// 发送文字消息
+			/* // 发送文字消息
 			sendText(){
-				uni.showToast({title:'发送文本消息',icon:"none"})
 				this.hideDrawer();//隐藏抽屉
 				if(!this.textMsg){return;}
-				
 				let content = this.replaceEmoji(this.textMsg);
 				let msg = {text:content}
 				this.sendMsg(msg,'text');
 				this.textMsg = '';//清空输入框
-			},
+			}, */
 			//替换表情符号为图片
 			replaceEmoji(str){
 				// 正则表达式匹配内容
@@ -575,17 +715,17 @@
 				var nowDate = new Date();
 				let lastid = this.msgList[this.msgList.length-1].msg.id;
 				lastid++;
-				let msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:content}}
-				// 发送消息
-				this.screenMsg(msg);
+				/* let msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:content}}
+				// 发送消息  
+				//this.screenMsg(msg);
 				// 定时器模拟对方回复,三秒
 				setTimeout(()=>{
 					lastid = this.msgList[this.msgList.length-1].msg.id;
 					lastid++;
 					msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:content}}
 					// 本地模拟发送消息
-					this.screenMsg(msg);
-				},3000)
+					//this.screenMsg(msg);
+				},3000) */
 			},
 			
 			// 添加文字消息到列表
@@ -651,7 +791,7 @@
 				let lastid = this.msgList[this.msgList.length-1].msg.id;
 				lastid++;
 				let row = {type:"system",msg:{id:lastid,type:type,content:content}};
-				this.screenMsg(row)
+				//this.screenMsg(row)
 			},
 			//领取详情
 			toDetails(rid){
