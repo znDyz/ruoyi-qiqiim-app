@@ -249,25 +249,24 @@
 			};
 		},
 		onLoad(option) {
-			var _this = this;
-			
-			console.log("获取上个页面传递过来的参数："+_this.friendObj.uuid);
-			_this.getMsgList();
+			this.friendObj = JSON.parse(decodeURIComponent(option.friendObj));		//聊天对象
+			this.userObj = uni.getStorageSync("user");								//当前用户					
+			this.loginMsg = this.getLoginMsg();
+			this.heartMsg = this.getHeartMsg();
+			console.log("获取上个页面传递过来的参数："+JSON.stringify(this.friendObj));
+			console.log(this.loginMsg);
+			this.getMsgList();
 			//语音自然播放结束
-			_this.AUDIO.onEnded((res)=>{_this.playMsgid=null;});
+			this.AUDIO.onEnded((res)=>{this.playMsgid=null;});
 			// #ifndef H5
 			//录音开始事件//录音结束事件
-			_this.RECORDER.onStart((e)=>{_this.recordBegin(e);})
-			_this.RECORDER.onStop((e)=>{_this.recordEnd(e);})
+			this.RECORDER.onStart((e)=>{this.recordBegin(e);})
+			this.RECORDER.onStop((e)=>{this.recordEnd(e);})
 			// #endif
 			
-			_this.emojiList =emojiData.imgArr[1].emojiList
+			this.emojiList =emojiData.imgArr[1].emojiList
 			
-			_this.friendObj = JSON.parse(decodeURIComponent(option.friendObj));		//聊天对象	
-			_this.userObj = uni.getStorageSync("user");								//当前用户					
-			_this.loginMsg = _this.getLoginMsg();
-			_this.heartMsg = _this.getHeartMsg();
-			_this.initWebSocket();	// 进入页面创建websocket连接
+			this.initWebSocket();	// 进入页面创建websocket连接
 		},
 		
 		onShow(){
@@ -290,22 +289,25 @@
 				let _this = this;
 				_this.socketTask = uni.connectSocket({
 					url: this.config.socketUrl,
-					success(data) {console.log("------socket------->websocket连接成功");}
+					success(data) {console.log("------------->websocket连接成功");}
 				});
-			 
+				 
 				//只有连接正常打开中 ，才能发送接收消息
 				_this.socketTask.onOpen((res) => {
-					console.log("------socket------->WebSocket连接正常打开中");
-					_this.isOpen = true;
-					_this.connectNum = 0;
+					console.log("------------->WebSocket连接正常打开中...！");
+					_this._isOpen = true;
+					_this._connectNum = 0;
 					// 1.发送登录信息 2.发送心跳信息 3.打开网络开关
 					_this.socketTask.send({
-						data: _this.loginMsg, async success() {
+						data: _this.loginMsg,
+						async success() {
 							console.log("------socket------->发送登录信息成功");
 						}
 					});
-					if (_this.heartCheck) { _this._reset()._start();}
-					_this.netWork = true;
+					if (_this._heartCheck) {
+						_this._reset()._start();
+					}
+					_this._netWork = true;
 					
 					_this.socketTask.onMessage((res) => {
 						var msg =  proto.Model.deserializeBinary(new Uint8Array(res.data));      //如果后端发送的是二进制帧（protobuf）会收到前面定义的类型
@@ -313,42 +315,50 @@
 						var cmd = msg.getCmd();
 						var sender = msg.getSender();
 						var time = msg.getTimestamp();
-						console.log("------socket------->>收到服务器内容：cmd："+cmd+"time："+time+"sender："+sender);
+						console.log("------socket--1111111111111111111111->收到服务器内容：cmd："+cmd+"time："+time+"sender："+sender);
 					});
-				});
+				})
 				//socket关闭事件监听
 				_this.socketTask.onClose((res) => {
-					console.log('------socket------->当前websocket连接已关闭');
-					if (_this.heartCheck) {_this._reset();}		// 停止心跳连接
-					_this.isOpen = true;						// 关闭已登录开关
+					console.log('------------->当前websocket连接已关闭');
+					if (_this._heartCheck) {_this._reset();}	// 停止心跳连接
+					_this._isOpen = true;				// 关闭已登录开关
 					// 检测是否是用户自己退出socket，如果不是进行重连
-					if (!_this.isClosed) {
-					    if (_this.isReconnection) {_this._reConnect()}
+					if (!_this._isClosed) {
+					    if (_this._isReconnection) {_this._reConnect()}
 					}
-				});
+				})
 				//socket异常事件监听
 				_this.socketTask.onError((err) => {
 					console.log('------socket------->当前websocket连接出现异常,错误信息为:' + JSON.stringify(err));
-					if (_this.heartCheck) {_this._reset();}	// 停止心跳连接
-					_this.isOpen = true;				// 关闭已登录开关
+					if (_this._heartCheck) {_this._reset();}	// 停止心跳连接
+					_this._isOpen = true;				// 关闭已登录开关
 					// 检测是否是用户自己退出socket，如果不是进行重连
-					if (!_this.isClosed) {
-					    if (_this.isReconnection) {_this._reConnect()}
+					if (!_this._isClosed) {
+					    if (_this._isReconnection) {_this._reConnect()}
 					}
-				});
+				})
 				// 检测网络变化
 				uni.onNetworkStatusChange(res => {
 				    console.log('------socket------->当前网络状态:' + res.isConnected);
-				    if (!_this.netWork) {
-				        _this.isOpen = false;
-				        if (this.isReconnection) {this._reConnect()}	 // 进行重连
+				    if (!_this._netWork) {
+				        _this._isOpen = false;
+				        // 进行重连
+				        if (this._isReconnection) {this._reConnect()}
 				    }
-				});
+				})
 			},
 			// 心跳重置
-			_reset() { clearTimeout(this.timeoutObj);},
+			_reset() {
+			    clearTimeout(this._timeoutObj);
+			},
 			// 心跳开始(定时发送心跳消息)
-			_start() { this.timeoutObj = setInterval(() => { this.sendBinary(1,this.heartMsg); }, this.timeout);},
+			_start() {
+			    let _this = this;
+			    _this._timeoutObj = setInterval(() => {
+			        _this.sendBinary(1,_this.heartMsg);	
+			    }, _this._timeout);
+			},
 			
 			//发送二进制消息
 			sendBinary(msgType, byteMsg) {
@@ -615,7 +625,7 @@
 									// console.log(image.width);
 									// console.log(image.height);
 									let msg = {url:res.tempFilePaths[i],w:image.width,h:image.height};
-									this.sendMsg(msg,'img');
+									//this.sendMsg(msg,'img');
 								}
 							});
 						}
@@ -666,7 +676,7 @@
 				let imgstr = '<img style="width:48px;height:48px;" src="'+ this.emojiPath + url +'">';
 				let content = '<div style="align-items: center;word-wrap:break-word;">' + imgstr + '</div>';    
 				let msg = {text:content}
-				this.sendMsg(msg,'text');
+				//this.sendMsg(msg,'text');
 				this.textMsg = '';//清空输入框
 			},
 			//获取焦点，如果不是选表情ing,则关闭抽屉
@@ -707,26 +717,26 @@
 				});
 				return '<div style="align-items: center;word-wrap:break-word;">'+replacedStr+'</div>';
 			},
-			
+			/*
 			// 发送消息
 			sendMsg(content,type){
 				//实际应用中，此处应该提交长连接，模板仅做本地处理。
 				var nowDate = new Date();
 				let lastid = this.msgList[this.msgList.length-1].msg.id;
 				lastid++;
-				/* let msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:content}}
+				let msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:0,username:"大黑哥",face:"/static/img/face.jpg"},content:content}}
 				// 发送消息  
-				//this.screenMsg(msg);
+				this.screenMsg(msg);
 				// 定时器模拟对方回复,三秒
 				setTimeout(()=>{
 					lastid = this.msgList[this.msgList.length-1].msg.id;
 					lastid++;
 					msg = {type:'user',msg:{id:lastid,time:nowDate.getHours()+":"+nowDate.getMinutes(),type:type,userinfo:{uid:1,username:"售后客服008",face:"/static/img/im/face/face_2.jpg"},content:content}}
 					// 本地模拟发送消息
-					//this.screenMsg(msg);
-				},3000) */
+					this.screenMsg(msg);
+				},3000)
 			},
-			
+			*/
 			// 添加文字消息到列表
 			addTextMsg(msg){this.msgList.push(msg);},
 			// 添加语音消息到列表
