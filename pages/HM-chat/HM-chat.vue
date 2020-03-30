@@ -242,7 +242,6 @@
 				windowsState:'',
 				redenvelopeData:{
 					rid:null,	//红包ID
-					from:null,
 					face:null,
 					blessing:null,
 					money:null
@@ -400,7 +399,7 @@
 				var bytes = message.serializeBinary();
 				return bytes;
 			},
-			sendMsgEvent() {
+			sendMsgEvent(){
 				/* 
 				this.hideDrawer();//隐藏抽屉
 				if(!this.textMsg){return;}
@@ -415,17 +414,17 @@
 					var content = new proto.MessageBody();
 					message.setCmd(5);								//1绑定，2心跳，3上线，4下线，5消息
 					message.setFlag(1);								//1 rsa加密 2aes加密
-					message.setSender(this.userObj.uuid);			//发送人
-					message.setReceiver(this.friendObj.uuid);		//接收人
-					content.setTitle("发送消息测试：这是发送的标题";	//标题
-					content.setTime(this.utils.now());				//时间戳
+					message.setSender(_this.userObj.uuid);			//发送人
+					message.setReceiver(_this.friendObj.uuid);		//接收人
+					content.setTitle("发送消息测试：这是发送的标题");	//标题
+					content.setTime(_this.utils.now());				//时间戳
 					content.setType(0);								//消息类型：0文字   1文件
-					content.setContent(this.sendMsg);
+					content.setContent(_this.sendMsg);
 					message.setContent(content.serializeBinary());
 					var messagebytes = message.serializeBinary();  
-					_this.sendBinary(3, _this.getSeandMsg())
+					_this.sendBinary(3, _this.getSeandMsg());
 				}
-			}
+			},
 			/*
 			// 接收消息(筛选处理)
 			screenMsg(msg){
