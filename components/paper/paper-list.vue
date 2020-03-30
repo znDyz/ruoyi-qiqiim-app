@@ -27,7 +27,7 @@
 			opendetail(){
 				uni.navigateTo({
 					//url: '../../pages/user-chat/user-chat'
-					url: '../../pages/HM-chat/HM-chat'
+					url: '../../pages/HM-chat/HM-chat?friendObj='+encodeURIComponent(JSON.stringify(item))
 				});
 			}
 		}
