@@ -23,11 +23,16 @@
 			item:Object,
 			index:Number
 		},
+		data () {
+		    return {
+		        friendObj: this.item
+		    }
+		},
 		methods:{
 			opendetail(){
 				uni.navigateTo({
-					//url: '../../pages/user-chat/user-chat'
-					url: '../../pages/HM-chat/HM-chat?friendObj='+encodeURIComponent(JSON.stringify(item))
+					url: '../../pages/chat/chat'
+					//url: '../../pages/HM-chat/HM-chat?friendObj='+encodeURIComponent(JSON.stringify(this.friendObj))
 				});
 			}
 		}
