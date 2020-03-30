@@ -1,10 +1,10 @@
 /* 统一资源标识符，设置项目全局请求域名 */
 
 //Api请求前缀
-const requestUrl='http://192.168.1.2:8080'
+const requestUrl='http://192.168.6.1:8080'
 
 //socket请求前缀
-const socketUrl='ws://192.168.1.2:2048/ws'
+const socketUrl='ws://192.168.6.1:2048/ws'
 
 //文件上传服务器路径
 const uploadServer='https://upload.xxx.com'
