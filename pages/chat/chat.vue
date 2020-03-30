@@ -20,9 +20,8 @@
 	export default {
 		data() {
 			return {
-				sendMsg:"",			//测试发送的信息
-				receiveMsg:"",		//测试收到的信息
-				toUserToken:"",		//测试接收消息人
+				sendMsg:"",
+				receiveMsg:"",
 				socketTask: null,			// websocket对象
 				_isOpen: false,				// socket打开状态
 				_netWork : true,			// 当前网络状态
@@ -44,9 +43,7 @@
 		},
 		onLoad() {
 			var _this = this;
-			//_this.currentToken = this.utils.getUUID();
-			_this.currentToken = uni.getStorageSync('token');
-			console.log("从缓存中获取的用户token为："+_this.currentToken);
+			_this.currentToken = this.utils.getUUID();
 			uni.getSystemInfo({
 				success(res) {
 					_this.sys_model = res.model;  
@@ -64,7 +61,7 @@
 			initWebSocket() {
 				let _this = this;
 				_this.socketTask = uni.connectSocket({
-					url: "ws://192.168.1.2:2048/ws",
+					url: this.config.socketUrl,
 					success(data) {console.log("------------->websocket连接成功");}
 				});
  
@@ -91,25 +88,7 @@
 						var cmd = msg.getCmd();
 						var sender = msg.getSender();
 						var time = msg.getTimestamp();
-						console.log("------socket--->收到服务器内容：cmd："+cmd+"time："+time+"sender："+sender);
-						if(cmd==3){	//上线
-							if(sender == _this.currentToken){
-								console.log("本人"+sender+"上线了");
-							}else{
-								this.toUserToken = sender;
-								uni.showToast({
-								    title: sender+"上线了",duration: 2000
-								});
-								console.log("用户"+sender+"上线了");
-							} 
-						}
-						if(cmd==4){	//下线
-							if(sender == _this.currentToken){
-								console.log("本人"+sender+"下线了");
-							}else{
-								console.log("用户"+sender+"下线了");
-							} 
-						}
+						console.log("------socket--1111111111111111111111->收到服务器内容：cmd："+cmd+"time："+time+"sender："+sender);
 					});
 				})
 				//socket关闭事件监听
